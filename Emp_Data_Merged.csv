@@ -1,0 +1,9 @@
+Unnamed: 0,emp_id,name,age,designation,salary,experience,city,department_id,department
+0,101,Amit Sharma,28,Software Engineer,60500.00000000001,4,Bangalore,1.0,IT
+1,102,Riya Verma,32,HR Manager,60000.0,8,Delhi,2.0,HR
+2,103,Rahul Mehta,26,Backend Developer,61442.857142857145,3,Pune,1.0,IT
+3,104,Sneha Iyer,35,Accountant,65000.0,10,Chennai,3.0,Finance
+4,105,Arjun Singh,29,Sales Executive,45000.0,5,Mumbai,4.0,Sales
+5,106,Neha Gupta,31,Frontend Developer,57200.00000000001,6,Bangalore,1.0,IT
+6,107,Vikram Rao,38,Operations Manager,72000.0,14,Hyderabad,,
+7,108,Pooja Nair,27,HR Executive,42000.0,2,Kochi,2.0,HR
