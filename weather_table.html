@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Data Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-card h3 {
+            color: #667eea;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: white;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .controls input,
+        .controls select {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .controls input:focus,
+        .controls select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .controls label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .table-container {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 1px;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #555;
+        }
+
+        tbody tr {
+            transition: background-color 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        .pagination {
+            padding: 20px 30px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            background: white;
+        }
+
+        .pagination button {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .pagination button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 0.9em;
+            }
+
+            th,
+            td {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌤️ Weather Data Dashboard</h1>
+            <p>Comprehensive Weather Analysis 2015-2024</p>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <h3>Total Records</h3>
+                <div class="value" id="totalRecords">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Avg Temperature</h3>
+                <div class="value" id="avgTemp">-°C</div>
+            </div>
+            <div class="stat-card">
+                <h3>Avg Humidity</h3>
+                <div class="value" id="avgHumidity">-%</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Rainfall</h3>
+                <div class="value" id="totalRainfall">- mm</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <label for="searchDate">Search Date:</label>
+            <input type="text" id="searchDate" placeholder="YYYY-MM-DD">
+
+            <label for="rowsPerPage">Rows per page:</label>
+            <select id="rowsPerPage">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+
+            <button onclick="exportToCSV()"
+                style="margin-left: auto; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                Export CSV
+            </button>
+        </div>
+
+        <div class="table-container">
+            <table id="weatherTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">Date ▼</th>
+                        <th onclick="sortTable(1)">Humidity (%) ▼</th>
+                        <th onclick="sortTable(2)">Pressure (hPa) ▼</th>
+                        <th onclick="sortTable(3)">Wind Speed (km/h) ▼</th>
+                        <th onclick="sortTable(4)">Cloud Cover (%) ▼</th>
+                        <th onclick="sortTable(5)">Rainfall (mm) ▼</th>
+                        <th onclick="sortTable(6)">Sunshine (hrs) ▼</th>
+                        <th onclick="sortTable(7)">Temperature (°C) ▼</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="8" class="loading">Loading data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination" id="pagination">
+        </div>
+    </div>
+
+    <script>
+        let weatherData = [];
+        let filteredData = [];
+        let currentPage = 1;
+        let rowsPerPage = 25;
+
+        // Load CSV data
+        async function loadData() {
+            try {
+                const response = await fetch('Temprature_data.csv');
+                const text = await response.text();
+                const rows = text.split('\n').slice(1); // Skip header
+
+                weatherData = rows.filter(row => row.trim()).map(row => {
+                    const cols = row.split(',');
+                    return {
+                        date: cols[0],
+                        humidity: parseFloat(cols[1]),
+                        pressure: parseFloat(cols[2]),
+                        windSpeed: parseFloat(cols[3]),
+                        cloudCover: parseFloat(cols[4]),
+                        rainfall: parseFloat(cols[5]),
+                        sunshine: parseFloat(cols[6]),
+                        temperature: parseFloat(cols[7])
+                    };
+                });
+
+                filteredData = [...weatherData];
+                updateStats();
+                displayTable();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('tableBody').innerHTML =
+                    '<tr><td colspan="8" style="color: red; text-align: center;">Error loading data. Please ensure Temprature_data.csv is in the same directory.</td></tr>';
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('totalRecords').textContent = weatherData.length.toLocaleString();
+
+            const avgTemp = (weatherData.reduce((sum, d) => sum + d.temperature, 0) / weatherData.length).toFixed(1);
+            document.getElementById('avgTemp').textContent = avgTemp + '°C';
+
+            const avgHumidity = (weatherData.reduce((sum, d) => sum + d.humidity, 0) / weatherData.length).toFixed(1);
+            document.getElementById('avgHumidity').textContent = avgHumidity + '%';
+
+            const totalRainfall = weatherData.reduce((sum, d) => sum + d.rainfall, 0).toFixed(1);
+            document.getElementById('totalRainfall').textContent = totalRainfall + ' mm';
+        }
+
+        function displayTable() {
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const pageData = filteredData.slice(start, end);
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = pageData.map(row => `
+                <tr>
+                    <td>${row.date}</td>
+                    <td>${row.humidity.toFixed(2)}</td>
+                    <td>${row.pressure.toFixed(2)}</td>
+                    <td>${row.windSpeed.toFixed(2)}</td>
+                    <td>${row.cloudCover.toFixed(2)}</td>
+                    <td>${row.rainfall.toFixed(2)}</td>
+                    <td>${row.sunshine.toFixed(2)}</td>
+                    <td>${row.temperature.toFixed(2)}</td>
+                </tr>
+            `).join('');
+
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+            const pagination = document.getElementById('pagination');
+
+            let html = `
+                <button onclick="goToPage(1)" ${currentPage === 1 ? 'disabled' : ''}>First</button>
+                <button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+            `;
+
+            const maxButtons = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+            if (endPage - startPage < maxButtons - 1) {
+                startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button onclick="goToPage(${i})" ${i === currentPage ? 'class="active"' : ''}>${i}</button>`;
+            }
+
+            html += `
+                <button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+                <button onclick="goToPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>Last</button>
+            `;
+
+            pagination.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                displayTable();
+            }
+        }
+
+        function sortTable(columnIndex) {
+            const keys = ['date', 'humidity', 'pressure', 'windSpeed', 'cloudCover', 'rainfall', 'sunshine', 'temperature'];
+            const key = keys[columnIndex];
+
+            filteredData.sort((a, b) => {
+                if (key === 'date') {
+                    return new Date(a[key]) - new Date(b[key]);
+                }
+                return a[key] - b[key];
+            });
+
+            currentPage = 1;
+            displayTable();
+        }
+
+        function exportToCSV() {
+            const headers = ['date', 'humidity', 'pressure', 'wind_speed', 'cloud_cover', 'rainfall', 'sunshine', 'temperature'];
+            const csv = [
+                headers.join(','),
+                ...filteredData.map(row =>
+                    `${row.date},${row.humidity},${row.pressure},${row.windSpeed},${row.cloudCover},${row.rainfall},${row.sunshine},${row.temperature}`
+                )
+            ].join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'weather_data_export.csv';
+            a.click();
+        }
+
+        // Search functionality
+        document.getElementById('searchDate').addEventListener('input', function (e) {
+            const searchTerm = e.target.value.toLowerCase();
+            filteredData = weatherData.filter(row =>
+                row.date.toLowerCase().includes(searchTerm)
+            );
+            currentPage = 1;
+            displayTable();
+        });
+
+        // Rows per page change
+        document.getElementById('rowsPerPage').addEventListener('change', function (e) {
+            rowsPerPage = parseInt(e.target.value);
+            currentPage = 1;
+            displayTable();
+        });
+
+        // Initialize
+        loadData();
+    </script>
+</body>
+
+</html>

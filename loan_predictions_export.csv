@@ -1,0 +1,2 @@
+id,timestamp,married,dependents,education,self_employed,property_area,applicant_income,coapplicant_income,loan_amount,loan_term,credit_history,prediction,confidence
+1,2026-01-28 14:07:41,Yes,0,Graduate,Yes,Urban,b'\x88\x13\x00\x00\x00\x00\x00\x00',b'\x00\x00\x00\x00\x00\x00\x00\x00',b'\x96\x00\x00\x00\x00\x00\x00\x00',b'\x0c\x00\x00\x00\x00\x00\x00\x00',b'\x01\x00\x00\x00\x00\x00\x00\x00',Approved,61.29696267004818
