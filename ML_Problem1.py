@@ -5,3 +5,5 @@ y = np.array([30, 50, 70, 90, 110, 130])
 model = LinearRegression()
 model.fit(x, y)
 print(model.predict([[7]]))
+ 
+ null
