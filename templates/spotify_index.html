@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Track Cluster Predictor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.95em;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-info {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .predict-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .predict-btn:active {
+            transform: translateY(0);
+        }
+
+        .predict-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-container {
+            margin-top: 30px;
+            padding: 30px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .result-container.show {
+            display: block;
+        }
+
+        .result-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .cluster-name {
+            font-size: 2em;
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .cluster-description {
+            font-size: 1.1em;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .confidence-bar {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .confidence-label {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .progress-bar {
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            transition: width 1s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .feature-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-card .label {
+            font-size: 0.85em;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .feature-card .value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .error-message {
+            background: #ff4757;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: shake 0.5s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-10px);
+            }
+
+            75% {
+                transform: translateX(10px);
+            }
+        }
+
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Spotify Track Cluster Predictor</h1>
+            <p>Discover which music cluster your track belongs to using AI-powered K-means clustering</p>
+        </div>
+
+        <div class="main-card">
+            <form id="predictionForm">
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="danceability">Danceability</label>
+                        <input type="number" id="danceability" name="danceability" min="0" max="1" step="0.01"
+                            value="0.5" required>
+                        <div class="input-info">Range: 0.0 - 1.0 (How suitable for dancing)</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="energy">Energy</label>
+                        <input type="number" id="energy" name="energy" min="0" max="1" step="0.01" value="0.5" required>
+                        <div class="input-info">Range: 0.0 - 1.0 (Intensity and activity)</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="valence">Valence</label>
+                        <input type="number" id="valence" name="valence" min="0" max="1" step="0.01" value="0.5"
+                            required>
+                        <div class="input-info">Range: 0.0 - 1.0 (Musical positiveness)</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="tempo">Tempo (BPM)</label>
+                        <input type="number" id="tempo" name="tempo" min="0" max="250" step="0.1" value="120" required>
+                        <div class="input-info">Beats per minute (e.g., 60-180)</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="duration_ms">Duration (ms)</label>
+                        <input type="number" id="duration_ms" name="duration_ms" min="0" max="600000" step="1000"
+                            value="200000" required>
+                        <div class="input-info">Track length in milliseconds</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="popularity">Popularity</label>
+                        <input type="number" id="popularity" name="popularity" min="0" max="100" step="1" value="50"
+                            required>
+                        <div class="input-info">Range: 0 - 100 (Track popularity)</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="predict-btn" id="predictBtn">
+                    Predict Cluster
+                </button>
+            </form>
+
+            <div class="error-message" id="errorMessage"></div>
+
+            <div class="result-container" id="resultContainer">
+                <div class="result-header">
+                    <h2 class="cluster-name" id="clusterName"></h2>
+                    <p class="cluster-description" id="clusterDescription"></p>
+                </div>
+
+                <div class="confidence-bar">
+                    <div class="confidence-label">Prediction Confidence</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%">
+                            <span id="confidenceText">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-summary" id="featureSummary"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('predictionForm');
+        const predictBtn = document.getElementById('predictBtn');
+        const resultContainer = document.getElementById('resultContainer');
+        const errorMessage = document.getElementById('errorMessage');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Hide previous results
+            resultContainer.classList.remove('show');
+            errorMessage.classList.remove('show');
+
+            // Show loading state
+            predictBtn.disabled = true;
+            predictBtn.innerHTML = '<span class="loader"></span> Predicting...';
+
+            // Collect form data
+            const formData = {
+                danceability: parseFloat(document.getElementById('danceability').value),
+                energy: parseFloat(document.getElementById('energy').value),
+                valence: parseFloat(document.getElementById('valence').value),
+                tempo: parseFloat(document.getElementById('tempo').value),
+                duration_ms: parseFloat(document.getElementById('duration_ms').value),
+                popularity: parseFloat(document.getElementById('popularity').value)
+            };
+
+            try {
+                const response = await fetch('http://localhost:5000/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Display results
+                    document.getElementById('clusterName').textContent = data.cluster_name;
+                    document.getElementById('clusterDescription').textContent = data.description;
+
+                    // Animate confidence bar
+                    const progressFill = document.getElementById('progressFill');
+                    const confidenceText = document.getElementById('confidenceText');
+                    setTimeout(() => {
+                        progressFill.style.width = data.confidence + '%';
+                        confidenceText.textContent = data.confidence + '%';
+                    }, 100);
+
+                    // Display feature summary
+                    const featureSummary = document.getElementById('featureSummary');
+                    featureSummary.innerHTML = `
+                        <div class="feature-card">
+                            <div class="label">Danceability</div>
+                            <div class="value">${data.features.danceability.toFixed(2)}</div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="label">Energy</div>
+                            <div class="value">${data.features.energy.toFixed(2)}</div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="label">Valence</div>
+                            <div class="value">${data.features.valence.toFixed(2)}</div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="label">Tempo</div>
+                            <div class="value">${data.features.tempo.toFixed(1)} BPM</div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="label">Duration</div>
+                            <div class="value">${(data.features.duration_ms / 1000).toFixed(1)}s</div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="label">Popularity</div>
+                            <div class="value">${data.features.popularity}</div>
+                        </div>
+                    `;
+
+                    resultContainer.classList.add('show');
+                } else {
+                    throw new Error(data.error || 'Prediction failed');
+                }
+            } catch (error) {
+                errorMessage.textContent = '❌ Error: ' + error.message;
+                errorMessage.classList.add('show');
+            } finally {
+                // Reset button
+                predictBtn.disabled = false;
+                predictBtn.innerHTML = 'Predict Cluster';
+            }
+        });
+    </script>
+</body>
+
+</html>

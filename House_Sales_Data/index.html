@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Sales Prediction System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .results {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .results.price {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .results.sold {
+            background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+            color: white;
+        }
+
+        .results.both {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .result-item {
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        .result-item strong {
+            font-size: 1.3em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-box h3 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .stat-box p {
+            opacity: 0.9;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error {
+            background: #f44336;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .recent-predictions {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .prediction-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 House Sales Prediction System</h1>
+            <p>Advanced ML-powered predictions using Linear & Logistic Regression</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Left Column: Input Form -->
+            <div class="card">
+                <h2>Property Details</h2>
+                <form id="predictionForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="square_footage">Square Footage:</label>
+                            <input type="number" id="square_footage" required min="500" max="10000" value="2500">
+                        </div>
+                        <div class="form-group">
+                            <label for="bedrooms">Bedrooms:</label>
+                            <input type="number" id="bedrooms" required min="1" max="10" value="4">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bathrooms">Bathrooms:</label>
+                            <input type="number" id="bathrooms" step="0.5" required min="1" max="10" value="2.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="age">Age (years):</label>
+                            <input type="number" id="age" required min="0" max="100" value="10">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="garage_spaces">Garage Spaces:</label>
+                            <input type="number" id="garage_spaces" required min="0" max="5" value="2">
+                        </div>
+                        <div class="form-group">
+                            <label for="lot_size">Lot Size (sq ft):</label>
+                            <input type="number" id="lot_size" required min="1000" max="50000" value="8000">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="floors">Floors:</label>
+                            <input type="number" id="floors" required min="1" max="4" value="2">
+                        </div>
+                        <div class="form-group">
+                            <label for="neighborhood_rating">Neighborhood Rating (1-10):</label>
+                            <input type="number" id="neighborhood_rating" required min="1" max="10" value="7">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="condition">Condition (1-10):</label>
+                            <input type="number" id="condition" required min="1" max="10" value="8">
+                        </div>
+                        <div class="form-group">
+                            <label for="school_rating">School Rating (1-10):</label>
+                            <input type="number" id="school_rating" required min="1" max="10" value="8">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="has_pool">Has Pool:</label>
+                            <select id="has_pool" required>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="renovated">Renovated:</label>
+                            <select id="renovated" required>
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location_type">Location Type:</label>
+                        <select id="location_type" required>
+                            <option value="Suburban">Suburban</option>
+                            <option value="Urban">Urban</option>
+                            <option value="Downtown">Downtown</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="distance_to_center">Distance to Center (KM):</label>
+                            <input type="number" id="distance_to_center" step="0.1" required min="0" max="100"
+                                value="15.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="days_on_market">Days on Market:</label>
+                            <input type="number" id="days_on_market" required min="0" max="365" value="0">
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="button" class="btn-primary" onclick="predictPrice()">
+                            💰 Predict Price
+                        </button>
+                        <button type="button" class="btn-primary" onclick="predictSold()">
+                            📊 Predict Sale
+                        </button>
+                        <button type="button" class="btn-success" onclick="predictBoth()">
+                            🎯 Predict Both
+                        </button>
+                    </div>
+
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p>Processing...</p>
+                    </div>
+
+                    <div class="error" id="error"></div>
+                </form>
+
+                <!-- Results sections -->
+                <div class="results price" id="priceResults"></div>
+                <div class="results sold" id="soldResults"></div>
+                <div class="results both" id="bothResults"></div>
+            </div>
+
+            <!-- Right Column: Statistics and Recent Predictions -->
+            <div class="card">
+                <h2>📈 Statistics</h2>
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-box">
+                        <h3 id="totalPredictions">0</h3>
+                        <p>Total Predictions</p>
+                    </div>
+                    <div class="stat-box">
+                        <h3 id="avgPrice">$0</h3>
+                        <p>Avg Predicted Price</p>
+                    </div>
+                </div>
+
+                <h2 style="margin-top: 30px;">📋 Recent Predictions</h2>
+                <div class="recent-predictions" id="recentPredictions">
+                    <p style="text-align: center; color: #999;">No predictions yet</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+
+        // Load statistics on page load
+        window.onload = () => {
+            loadStatistics();
+            loadRecentPredictions();
+        };
+
+        function getFormData() {
+            return {
+                Square_Footage: parseFloat(document.getElementById('square_footage').value),
+                Bedrooms: parseInt(document.getElementById('bedrooms').value),
+                Bathrooms: parseFloat(document.getElementById('bathrooms').value),
+                Age: parseInt(document.getElementById('age').value),
+                Garage_Spaces: parseFloat(document.getElementById('garage_spaces').value),
+                Lot_Size: parseFloat(document.getElementById('lot_size').value),
+                Floors: parseInt(document.getElementById('floors').value),
+                Neighborhood_Rating: parseInt(document.getElementById('neighborhood_rating').value),
+                Condition: parseInt(document.getElementById('condition').value),
+                School_Rating: parseFloat(document.getElementById('school_rating').value),
+                Has_Pool: parseInt(document.getElementById('has_pool').value),
+                Renovated: parseInt(document.getElementById('renovated').value),
+                Location_Type: document.getElementById('location_type').value,
+                Distance_To_Center_KM: parseFloat(document.getElementById('distance_to_center').value),
+                Days_On_Market: parseFloat(document.getElementById('days_on_market').value)
+            };
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+            hideResults();
+            hideError();
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+        }
+
+        function hideResults() {
+            document.getElementById('priceResults').classList.remove('show');
+            document.getElementById('soldResults').classList.remove('show');
+            document.getElementById('bothResults').classList.remove('show');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+
+        function hideError() {
+            document.getElementById('error').classList.remove('show');
+        }
+
+        async function predictPrice() {
+            showLoading();
+            try {
+                const data = getFormData();
+                const response = await fetch(`${API_BASE_URL}/predict-price`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error('Prediction failed');
+
+                const result = await response.json();
+                displayPriceResult(result);
+                loadStatistics();
+                loadRecentPredictions();
+            } catch (error) {
+                showError('Error predicting price: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function predictSold() {
+            showLoading();
+            try {
+                const data = getFormData();
+                const response = await fetch(`${API_BASE_URL}/predict-sold`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error('Prediction failed');
+
+                const result = await response.json();
+                displaySoldResult(result);
+                loadStatistics();
+                loadRecentPredictions();
+            } catch (error) {
+                showError('Error predicting sale: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function predictBoth() {
+            showLoading();
+            try {
+                const data = getFormData();
+                const response = await fetch(`${API_BASE_URL}/predict-both`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error('Prediction failed');
+
+                const result = await response.json();
+                displayBothResults(result);
+                loadStatistics();
+                loadRecentPredictions();
+            } catch (error) {
+                showError('Error making predictions: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayPriceResult(result) {
+            const resultsDiv = document.getElementById('priceResults');
+            resultsDiv.innerHTML = `
+                <div class="result-item">
+                    <strong>Predicted Price: ${result.formatted_price}</strong>
+                </div>
+                <div class="result-item">
+                    Model: ${result.model}
+                </div>
+                <div class="result-item">
+                    Prediction ID: #${result.prediction_id}
+                </div>
+            `;
+            resultsDiv.classList.add('show');
+        }
+
+        function displaySoldResult(result) {
+            const resultsDiv = document.getElementById('soldResults');
+            resultsDiv.innerHTML = `
+                <div class="result-item">
+                    <strong>${result.will_sell_within_week ? '✅ Will Sell Within Week' : '❌ Won\'t Sell Within Week'}</strong>
+                </div>
+                <div class="result-item">
+                    Probability: ${result.probability}%
+                </div>
+                <div class="result-item">
+                    Confidence: ${result.confidence}
+                </div>
+                <div class="result-item">
+                    Model: ${result.model}
+                </div>
+                <div class="result-item">
+                    Prediction ID: #${result.prediction_id}
+                </div>
+            `;
+            resultsDiv.classList.add('show');
+        }
+
+        function displayBothResults(result) {
+            const resultsDiv = document.getElementById('bothResults');
+            resultsDiv.innerHTML = `
+                <div class="result-item">
+                    <strong>💰 Predicted Price: ${result.price_prediction.formatted_price}</strong>
+                </div>
+                <div class="result-item">
+                    <strong>📊 ${result.sold_prediction.will_sell_within_week ? '✅ Will Sell Within Week' : '❌ Won\'t Sell Within Week'}</strong>
+                </div>
+                <div class="result-item">
+                    Sale Probability: ${result.sold_prediction.probability}%
+                </div>
+                <div class="result-item">
+                    Confidence: ${result.sold_prediction.confidence}
+                </div>
+                <div class="result-item">
+                    Price Prediction ID: #${result.price_prediction.prediction_id} | 
+                    Sold Prediction ID: #${result.sold_prediction.prediction_id}
+                </div>
+            `;
+            resultsDiv.classList.add('show');
+        }
+
+        async function loadStatistics() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/statistics`);
+                if (!response.ok) return;
+
+                const stats = await response.json();
+
+                document.getElementById('totalPredictions').textContent =
+                    stats.price_predictions.total + stats.sold_predictions.total;
+
+                document.getElementById('avgPrice').textContent =
+                    '$' + Math.round(stats.price_predictions.avg_price).toLocaleString();
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        async function loadRecentPredictions() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/predictions/recent?limit=5`);
+                if (!response.ok) return;
+
+                const data = await response.json();
+                const container = document.getElementById('recentPredictions');
+
+                if (data.price_predictions.length === 0 && data.sold_predictions.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #999;">No predictions yet</p>';
+                    return;
+                }
+
+                let html = '';
+
+                // Show recent price predictions
+                data.price_predictions.forEach(pred => {
+                    html += `
+                        <div class="prediction-item">
+                            <strong>💰 Price: $${Math.round(pred.predicted_price).toLocaleString()}</strong><br>
+                            ${pred.square_footage} sq ft, ${pred.bedrooms} bed, ${pred.bathrooms} bath<br>
+                            <small>${new Date(pred.timestamp).toLocaleString()}</small>
+                        </div>
+                    `;
+                });
+
+                // Show recent sold predictions
+                data.sold_predictions.forEach(pred => {
+                    html += `
+                        <div class="prediction-item">
+                            <strong>📊 ${pred.predicted_sold ? '✅ Will Sell' : '❌ Won\'t Sell'}</strong><br>
+                            ${pred.square_footage} sq ft, Probability: ${(pred.probability * 100).toFixed(1)}%<br>
+                            <small>${new Date(pred.timestamp).toLocaleString()}</small>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading recent predictions:', error);
+            }
+        }
+
+        // Refresh data every 30 seconds
+        setInterval(() => {
+            loadStatistics();
+            loadRecentPredictions();
+        }, 30000);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Track Cluster Predictor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.95em;
+        }
+
+        .input-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: white;
+            cursor: pointer;
+        }
+
+        .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-info {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .emoji-icon {
+            font-size: 1.2em;
+            margin-right: 5px;
+        }
+
+        .predict-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .predict-btn:active {
+            transform: translateY(0);
+        }
+
+        .predict-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-container {
+            margin-top: 30px;
+            padding: 30px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .result-container.show {
+            display: block;
+        }
+
+        .result-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .cluster-name {
+            font-size: 2em;
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .cluster-description {
+            font-size: 1.1em;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .confidence-bar {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .confidence-label {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .progress-bar {
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            transition: width 1s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .feature-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-card .label {
+            font-size: 0.85em;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .feature-card .value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .sample-songs {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .sample-songs h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .song-item {
+            background: #f5f7fa;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .song-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .song-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.05em;
+            margin-bottom: 5px;
+        }
+
+        .song-details {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .song-genre {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin-left: 8px;
+        }
+
+        .error-message {
+            background: #ff4757;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: shake 0.5s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-10px);
+            }
+
+            75% {
+                transform: translateX(10px);
+            }
+        }
+
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .sound-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5em;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .sound-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .sound-toggle.muted {
+            background: #ddd;
+            border-color: #999;
+        }
+    </style>
+</head>
+
+<body>
+    <button class="sound-toggle" id="soundToggle" title="Toggle Sound Effects">🔊</button>
+
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Spotify Track Cluster Predictor</h1>
+            <p>Discover which music cluster your track belongs to using AI-powered K-means clustering</p>
+        </div>
+
+        <div class="main-card">
+            <form id="predictionForm">
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="mood"><span class="emoji-icon">😊</span>What's the mood?</label>
+                        <select id="mood" name="mood" required>
+                            <option value="">Select a mood...</option>
+                            <option value="happy">😄 Happy & Upbeat</option>
+                            <option value="sad">😢 Sad & Melancholic</option>
+                            <option value="energetic">⚡ Energetic & Pumped</option>
+                            <option value="calm">😌 Calm & Peaceful</option>
+                            <option value="angry">😠 Angry & Intense</option>
+                        </select>
+                        <div class="input-info">The overall emotional tone of the track</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="activity"><span class="emoji-icon">🎯</span>What's it for?</label>
+                        <select id="activity" name="activity" required>
+                            <option value="">Select an activity...</option>
+                            <option value="party">🎉 Party & Dancing</option>
+                            <option value="workout">💪 Workout & Exercise</option>
+                            <option value="study">📚 Study & Focus</option>
+                            <option value="sleep">😴 Sleep & Relaxation</option>
+                            <option value="drive">🚗 Driving & Commute</option>
+                            <option value="chill">🛋️ Chill & Hangout</option>
+                        </select>
+                        <div class="input-info">Best activity for this track</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="pace"><span class="emoji-icon">⏱️</span>How fast is it?</label>
+                        <select id="pace" name="pace" required>
+                            <option value="">Select pace...</option>
+                            <option value="slow">🐢 Slow (Ballad)</option>
+                            <option value="medium">🚶 Medium (Moderate)</option>
+                            <option value="fast">🚀 Fast (Upbeat)</option>
+                        </select>
+                        <div class="input-info">The speed/tempo of the track</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="length"><span class="emoji-icon">⏳</span>How long is the track?</label>
+                        <select id="length" name="length" required>
+                            <option value="">Select length...</option>
+                            <option value="short">⚡ Short (< 3 min)</option>
+                            <option value="medium">📊 Medium (3-4 min)</option>
+                            <option value="long">📏 Long (> 4 min)</option>
+                        </select>
+                        <div class="input-info">Duration of the track</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="predict-btn" id="predictBtn">
+                    Predict Cluster
+                </button>
+            </form>
+
+            <div class="error-message" id="errorMessage"></div>
+
+            <div class="result-container" id="resultContainer">
+                <div class="result-header">
+                    <h2 class="cluster-name" id="clusterName"></h2>
+                    <p class="cluster-description" id="clusterDescription"></p>
+                </div>
+
+                <div class="confidence-bar">
+                    <div class="confidence-label">Prediction Confidence</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%">
+                            <span id="confidenceText">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sample-songs" id="sampleSongs">
+                    <h3>🎵 Similar Songs in This Cluster:</h3>
+                    <div id="songsList"></div>
+                </div>
+
+                <div class="feature-summary" id="featureSummary"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('predictionForm');
+        const predictBtn = document.getElementById('predictBtn');
+        const resultContainer = document.getElementById('resultContainer');
+        const errorMessage = document.getElementById('errorMessage');
+        const soundToggle = document.getElementById('soundToggle');
+        let soundEnabled = true;
+
+        // Web Audio API for sound effects
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioContext = new AudioContext();
+
+        // Toggle sound on/off
+        soundToggle.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
+            soundToggle.classList.toggle('muted');
+        });
+
+        // Function to play sound based on cluster
+        function playClusterSound(cluster) {
+            if (!soundEnabled) return;
+
+            // Resume audio context if suspended
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            const now = audioContext.currentTime;
+
+            // Different sound profiles for each cluster
+            const soundProfiles = {
+                0: { // Chill Danceable (Slow Tempo)
+                    frequencies: [220, 277, 330],
+                    duration: 0.8,
+                    type: 'sine'
+                },
+                1: { // Happy Long Tracks
+                    frequencies: [440, 554, 659],
+                    duration: 0.6,
+                    type: 'sine'
+                },
+                2: { // Sad Long Tracks
+                    frequencies: [165, 196, 220],
+                    duration: 1.0,
+                    type: 'sine'
+                },
+                3: { // Fast Danceable (High Tempo)
+                    frequencies: [523, 659, 784],
+                    duration: 0.4,
+                    type: 'square'
+                },
+                4: { // Fast Short Tracks
+                    frequencies: [587, 740, 880],
+                    duration: 0.3,
+                    type: 'triangle'
+                }
+            };
+
+            const profile = soundProfiles[cluster] || soundProfiles[0];
+
+            // Play a chord
+            profile.frequencies.forEach((freq, index) => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.type = profile.type;
+                oscillator.frequency.setValueAtTime(freq, now);
+
+                // Fade in and out
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.1, now + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + profile.duration);
+
+                oscillator.start(now + index * 0.1);
+                oscillator.stop(now + profile.duration + index * 0.1);
+            });
+
+            // Success chime
+            setTimeout(() => {
+                const chime = audioContext.createOscillator();
+                const chimeGain = audioContext.createGain();
+
+                chime.connect(chimeGain);
+                chimeGain.connect(audioContext.destination);
+
+                chime.type = 'sine';
+                chime.frequency.setValueAtTime(880, audioContext.currentTime);
+                chime.frequency.exponentialRampToValueAtTime(1320, audioContext.currentTime + 0.3);
+
+                chimeGain.gain.setValueAtTime(0.15, audioContext.currentTime);
+                chimeGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+                chime.start();
+                chime.stop(audioContext.currentTime + 0.3);
+            }, 300);
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Hide previous results
+            resultContainer.classList.remove('show');
+            errorMessage.classList.remove('show');
+
+            // Show loading state
+            predictBtn.disabled = true;
+            predictBtn.innerHTML = '<span class="loader"></span> Predicting...';
+
+            // Collect form data (user-friendly inputs)
+            const formData = {
+                mood: document.getElementById('mood').value,
+                activity: document.getElementById('activity').value,
+                pace: document.getElementById('pace').value,
+                length: document.getElementById('length').value
+            };
+
+            try {
+                const response = await fetch('http://localhost:5000/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Play sound effect for the cluster
+                    playClusterSound(data.cluster);
+
+                    // Display results
+                    document.getElementById('clusterName').textContent = data.cluster_name;
+                    document.getElementById('clusterDescription').textContent = data.description;
+
+                    // Animate confidence bar
+                    const progressFill = document.getElementById('progressFill');
+                    const confidenceText = document.getElementById('confidenceText');
+                    setTimeout(() => {
+                        progressFill.style.width = data.confidence + '%';
+                        confidenceText.textContent = data.confidence + '%';
+                    }, 100);
+
+                    // Display feature summary with user-friendly labels
+                    const featureSummary = document.getElementById('featureSummary');
+                    const moodEmoji = { 'happy': '😄', 'sad': '😢', 'energetic': '⚡', 'calm': '😌', 'angry': '😠' };
+                    const activityEmoji = { 'party': '🎉', 'workout': '💪', 'study': '📚', 'sleep': '😴', 'drive': '🚗', 'chill': '🛋️' };
+                    const paceEmoji = { 'slow': '🐢', 'medium': '🚶', 'fast': '🚀' };
+                    const lengthEmoji = { 'short': '⚡', 'medium': '📊', 'long': '📏' };
+
+                    featureSummary.innerHTML = `
+                        <div class="feature-card">
+                            <div class="label">Mood</div>
+                            <div class="value">${moodEmoji[formData.mood] || '😊'}</div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="label">Activity</div>
+                            <div class="value">${activityEmoji[formData.activity] || '🎯'}</div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="label">Pace</div>
+                            <div class="value">${paceEmoji[formData.pace] || '⏱️'}</div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="label">Length</div>
+                            <div class="value">${lengthEmoji[formData.length] || '⏳'}</div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="label">Danceability</div>
+                            <div class="value">${data.features.danceability.toFixed(2)}</div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="label">Energy</div>
+                            <div class="value">${data.features.energy.toFixed(2)}</div>
+                        </div>
+                    `;
+
+                    // Display sample songs
+                    const songsList = document.getElementById('songsList');
+                    if (data.sample_songs && data.sample_songs.length > 0) {
+                        songsList.innerHTML = data.sample_songs.map(song => `
+                            <div class="song-item">
+                                <div class="song-name">🎵 ${song.track_name}</div>
+                                <div class="song-details">
+                                    👤 ${song.artist}
+                                    <span class="song-genre">${song.genre}</span>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+
+                    resultContainer.classList.add('show');
+                } else {
+                    throw new Error(data.error || 'Prediction failed');
+                }
+            } catch (error) {
+                errorMessage.textContent = '❌ Error: ' + error.message;
+                errorMessage.classList.add('show');
+            } finally {
+                // Reset button
+                predictBtn.disabled = false;
+                predictBtn.innerHTML = 'Predict Cluster';
+            }
+        });
+    </script>
+</body>
+
+</html>
